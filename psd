@@ -1,0 +1,76 @@
+import tkinter as tk
+from tkinter import filedialog
+from openpyxl import load_workbook
+import os
+import comtypes.client
+
+
+def open_psd():
+    global psd_path
+    psd_path = filedialog.askopenfilename(
+        title="Выберите файл PSD", filetypes=[("PSD files", "*.psd")])
+    psd_label.config(text=psd_path)
+
+
+def open_excel():
+    global excel_path
+    excel_path = filedialog.askopenfilename(title="Выберите файл Excel", filetypes=[
+                                            ("Excel files", "*.xlsx;*.xls")])
+    excel_label.config(text=excel_path)
+
+
+def process_files():
+    if not psd_path or not excel_path:
+        print("Ошибка: Не выбраны файлы PSD или Excel.")
+        return
+
+    wb = load_workbook(excel_path)
+    ws = wb.active
+
+    photoshop_app = comtypes.client.CreateObject("Photoshop.Application")
+
+    for row in ws.iter_rows(min_row=1, max_col=1, values_only=True):
+        cell_value = row[0]
+        if not cell_value:
+            break
+
+        psd = photoshop_app.Open(psd_path)
+        text_layer = None
+
+        for layer in psd.Layers:
+            if layer.Name == 'Facts':
+                text_layer = layer
+                break
+
+        if text_layer:
+            text_layer.TextItem.Contents = cell_value
+            save_path = os.path.join(
+                os.path.dirname(psd_path), f"{cell_value}.psd")
+            psd.SaveAs(save_path)
+            psd.Close()
+
+    photoshop_app.Quit()
+
+    print("Обработка завершена")
+
+
+# Создание графического интерфейса
+app = tk.Tk()
+app.title("PSD Text Updater")
+
+open_psd_button = tk.Button(app, text="Открыть PSD", command=open_psd)
+open_psd_button.pack()
+
+psd_label = tk.Label(app, text="")
+psd_label.pack()
+
+open_excel_button = tk.Button(app, text="Открыть таблицу", command=open_excel)
+open_excel_button.pack()
+
+excel_label = tk.Label(app, text="")
+excel_label.pack()
+
+save_button = tk.Button(app, text="Сохранить", command=process_files)
+save_button.pack()
+
+app.mainloop()
