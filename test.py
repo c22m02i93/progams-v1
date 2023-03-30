@@ -91,10 +91,16 @@ def process_dataframe(df):
 
     morph = pymorphy2.MorphAnalyzer()
 
-    titles_dative = {
+    titles_dative_line_1 = {
         "Митрополит": "Его Высокопреосвященству",
         "Архиепископ": "Его Высокопреосвященству",
         "Епископ": "Его Преосвященству"
+    }
+
+    titles_dative_line_2 = {
+        "Митрополит": "Высокопреосвященнейшему",
+        "Архиепископ": "Высокопреосвященнейшему",
+        "Епископ": "Преосвященнейшему"
     }
 
     for _, row in df.iterrows():
@@ -116,8 +122,10 @@ def process_dataframe(df):
 
         first_name_dative = first_name_dative_obj.word.upper()
 
-        title_dative = titles_dative.get(title)
-        if title_dative is None:
+        title_dative_line_1 = titles_dative_line_1.get(title)
+        title_dative_line_2 = titles_dative_line_2.get(title)
+
+        if title_dative_line_1 is None or title_dative_line_2 is None:
             continue
 
         region_parts = region.split(" и ")
@@ -134,9 +142,10 @@ def process_dataframe(df):
                     region_dative_parts.append(part.capitalize())
         region_dative = " ".join(region_dative_parts)
 
-        line_2 = f"{title_dative} {first_name_dative}"
+        line_1 = f"{title_dative_line_1},"
+        line_2 = f"{title_dative_line_2} {first_name_dative},"
         line_3 = f"{title}у {region_dative}"
-        processed_row = f"{line_2}\n{line_3}"
+        processed_row = f"{line_1}\n{line_2}\n{line_3}"
         processed_rows.append(processed_row)
 
     return processed_rows
