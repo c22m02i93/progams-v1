@@ -58,7 +58,9 @@ def process_files():
                 break
 
         if text_layer:
-            text_layer.TextItem.Contents = cell_value
+            # Используем Soft Return для сохранения переноса строк
+            text_layer.TextItem.Contents = cell_value.replace('\n', '\r')
+
             timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
             save_path = os.path.join(
                 save_folder_path, f"{base_name}_{counter}_{timestamp}.psd")
