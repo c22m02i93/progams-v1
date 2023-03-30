@@ -120,34 +120,26 @@ def process_dataframe(df):
         if title_dative is None:
             continue
 
-        region_dative = []
-        for word in region.split():
-            if word.lower() == "и":
-                region_dative.append("и")
+        region_parts = region.split(" и ")
+
+        region_dative_parts = []
+        for part in region.split():
+            inflected_word = morph.parse(part)[0].inflect({'datv'})
+            if inflected_word is not None:
+                region_dative_parts.append(inflected_word.word.capitalize())
             else:
-                dative_word = morph.parse(word)[0].inflect({'datv'})
-                if dative_word is not None:
-                    region_dative.append(dative_word.word.capitalize())
+                if part.lower() == "и":
+                    region_dative_parts.append(part.lower())
                 else:
-                    region_dative.append(word.capitalize())
-        region_dative = " ".join(region_dative)
+                    region_dative_parts.append(part.capitalize())
+        region_dative = " ".join(region_dative_parts)
 
-        if title == "Митрополит":
-            line_2 = f"Высокопреосвященнейшему {first_name_dative}"
-        elif title == "Архиепископ":
-            line_2 = f"Высокопреосвященнейшему {first_name_dative}"
-        elif title == "Епископ":
-            line_2 = f"Преосвященнейшему {first_name_dative}"
-        else:
-            continue
-
-        line_3 = f"{title}у {region.title()}"
-        processed_row = f"{title_dative},\n{line_2}\n{line_3}"
+        line_2 = f"{title_dative} {first_name_dative}"
+        line_3 = f"{title}у {region_dative}"
+        processed_row = f"{line_2}\n{line_3}"
         processed_rows.append(processed_row)
 
     return processed_rows
-
-    processed_rows = []
 
     morph = pymorphy2.MorphAnalyzer()
 
