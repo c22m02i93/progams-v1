@@ -3,6 +3,11 @@ from tkinter import filedialog
 from openpyxl import load_workbook
 import os
 import comtypes.client
+import datetime
+
+psd_path = ''
+excel_path = ''
+save_folder_path = ''
 
 
 def open_psd():
@@ -19,15 +24,25 @@ def open_excel():
     excel_label.config(text=excel_path)
 
 
+def select_save_folder():
+    global save_folder_path
+    save_folder_path = filedialog.askdirectory(
+        title="Выберите папку для сохранения")
+    save_folder_label.config(text=save_folder_path)
+
+
 def process_files():
-    if not psd_path or not excel_path:
-        print("Ошибка: Не выбраны файлы PSD или Excel.")
+    if not psd_path or not excel_path or not save_folder_path:
+        print("Ошибка: Не выбраны файлы PSD, Excel или папка для сохранения.")
         return
 
     wb = load_workbook(excel_path)
     ws = wb.active
 
     photoshop_app = comtypes.client.CreateObject("Photoshop.Application")
+
+    base_name = os.path.splitext(os.path.basename(psd_path))[0]
+    counter = 1
 
     for row in ws.iter_rows(min_row=1, max_col=1, values_only=True):
         cell_value = row[0]
@@ -44,10 +59,13 @@ def process_files():
 
         if text_layer:
             text_layer.TextItem.Contents = cell_value
+            timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
             save_path = os.path.join(
-                os.path.dirname(psd_path), f"{cell_value}.psd")
+                save_folder_path, f"{base_name}_{counter}_{timestamp}.psd")
             psd.SaveAs(save_path)
             psd.Close()
+
+        counter += 1
 
     photoshop_app.Quit()
 
@@ -69,6 +87,13 @@ open_excel_button.pack()
 
 excel_label = tk.Label(app, text="")
 excel_label.pack()
+
+select_save_folder_button = tk.Button(
+    app, text="Выбрать папку сохранения", command=select_save_folder)
+select_save_folder_button.pack()
+
+save_folder_label = tk.Label(app, text="")
+save_folder_label.pack()
 
 save_button = tk.Button(app, text="Сохранить", command=process_files)
 save_button.pack()
